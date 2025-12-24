@@ -23,5 +23,5 @@ Bagian khusus admin untuk manajemen data destinasi dan otomasi bantuan pengguna.
 
 | Dashboard Utama Admin | Manajemen FAQ & MasBot |
 | :---: | :---: |
-| ![Admin Dashboard](Screenshot%202025-12-24%20174751.png) | ![Chatbot Admin](Screenshot%202025-12-24%20174841.png) |
+| ![Admin Dashboard](Screenshot%202025-12-24%20174751.png) | ![Chatbot Admin](Screenshot 2025-12-24 174902.png) |
 | *Panel kendali untuk menambah, mengubah, atau menghapus data tempat wisata secara realtime.* | *Konfigurasi jawaban otomatis Chatbot (MasBot) untuk menjawab pertanyaan pengguna.* |
