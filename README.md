@@ -19,9 +19,9 @@ Bagian ini menampilkan fitur eksplorasi wisata, rute transportasi, dan informasi
 ---
 
 ### 🔐 Tampilan Pengelola (Admin Panel)
-Bagian khusus admin untuk manajemen data destinasi dan otomasi bantuan pengguna.
+Bagian khusus admin untuk CRUD manajemen data destinasi dan data penggunaan chatbot
 
 | Dashboard Utama Admin | Manajemen FAQ & MasBot |
 | :---: | :---: |
-| ![Admin Dashboard](Screenshot%202025-12-24%20174751.png) | ![Chatbot Admin](Screenshot 2025-12-24 174902.png) |
-| *Panel kendali untuk menambah, mengubah, atau menghapus data tempat wisata secara realtime.* | *Konfigurasi jawaban otomatis Chatbot (MasBot) untuk menjawab pertanyaan pengguna.* |
+| ![Admin Dashboard](Screenshot%202025-12-24%20174852.png) | ![Chatbot Admin](Screenshot%202025-12-24%20174902.png) |
+| *Panel kendali data wisata.* | *Konfigurasi jawaban otomatis.* |
