@@ -1,8 +1,8 @@
 import { useMemo, useState, FormEvent, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; 
 import { 
-  MapPin, Coffee, Mountain, Star, PlusCircle, Image as ImageIcon, 
-  Search, LogOut, Trash2, Pencil, XCircle, FileText, Newspaper
+  MapPin, Coffee, Mountain, PlusCircle, 
+  Search, LogOut, Trash2, Pencil, FileText, Newspaper
 } from "lucide-react";
 
 import InfoCard from "../components/ui/InfoCard";
@@ -50,7 +50,7 @@ type NewsForm = {
 export default function AdminDashboard() {
   const navigate = useNavigate();
   
-  // TABS STATE: 'places' atau 'news' (INI YANG MEMBUAT TAB BERFUNGSI)
+  // TABS STATE
   const [activeTab, setActiveTab] = useState<"places" | "news">("places");
 
   // DATA STATE
@@ -84,14 +84,18 @@ export default function AdminDashboard() {
         fetch(`${API_BASE}/get_kuliner`)
       ]);
       
+      const dataWisata = await resWisata.json();
+      const dataCafe = await resCafe.json();
+      const dataKuliner = await resKuliner.json();
+
       const mergedPlaces = [
-        ...(await resWisata.json()).map((i:any) => ({ id: i.id, name: i.nama_tempat, category: "Wisata Alam", address: i.alamat, imageUrl: i.link_foto, price: i.htm })),
-        ...(await resCafe.json()).map((i:any) => ({ id: i.id, name: i.nama_tempat, category: "Cafe", address: i.alamat, imageUrl: i.link_foto, price: i.htm })),
-        ...(await resKuliner.json()).map((i:any) => ({ id: i.id, name: i.nama_tempat, category: "Kuliner", address: i.alamat, imageUrl: i.link_foto, price: i.htm })),
+        ...dataWisata.map((i:any) => ({ id: i.id, name: i.nama_tempat, category: "Wisata Alam", address: i.alamat, imageUrl: i.link_foto, price: i.htm })),
+        ...dataCafe.map((i:any) => ({ id: i.id, name: i.nama_tempat, category: "Cafe", address: i.alamat, imageUrl: i.link_foto, price: i.htm })),
+        ...dataKuliner.map((i:any) => ({ id: i.id, name: i.nama_tempat, category: "Kuliner", address: i.alamat, imageUrl: i.link_foto, price: i.htm })),
       ];
       setPlaces(mergedPlaces);
 
-      // Fetch News (Ambil data berita dari Backend)
+      // Fetch News
       const resNews = await fetch(`${API_BASE}/api/news`);
       if (resNews.ok) {
         setNewsList(await resNews.json());
@@ -104,6 +108,11 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchData();
+    // Reset success message after 3 seconds to prevent effect loop if dependencies change
+    if (successMsg) {
+        const timer = setTimeout(() => setSuccessMsg(""), 3000);
+        return () => clearTimeout(timer);
+    }
   }, [successMsg]); 
 
   // --- HANDLERS FOR PLACES ---
@@ -131,7 +140,12 @@ export default function AdminDashboard() {
         payload = { nama_tempat: placeForm.name, kategori: "kuliner", alamat: placeForm.address, htm: parseInt(placeForm.price)||0, link_gmaps: "-", link_foto: placeForm.imageUrl, deskripsi: "-" };
       } else { throw new Error("Kategori wajib dipilih"); }
 
-      const res = await fetch(endpoint, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const res = await fetch(endpoint, { 
+        method, 
+        headers: { "Content-Type": "application/json" }, 
+        body: JSON.stringify(payload) 
+      });
+      
       if (!res.ok) throw new Error("Gagal menyimpan tempat");
 
       setSuccessMsg(isEditing ? "Tempat berhasil diupdate!" : "Tempat berhasil ditambahkan!");
@@ -154,8 +168,11 @@ export default function AdminDashboard() {
     else if(cat==="Cafe") endpoint=`${API_BASE}/api/delete_cafe/${id}`;
     else if(cat==="Kuliner") endpoint=`${API_BASE}/api/delete_kuliner/${id}`;
 
-    await fetch(endpoint, { method: "DELETE" });
-    setSuccessMsg("Data terhapus."); fetchData();
+    const res = await fetch(endpoint, { method: "DELETE" });
+    if(res.ok) {
+        setSuccessMsg("Data terhapus."); 
+        fetchData();
+    }
   };
 
   // --- HANDLERS FOR NEWS ---
@@ -193,8 +210,11 @@ export default function AdminDashboard() {
 
   const handleDeleteNews = async (id: number) => {
     if(!confirm("Hapus berita ini?")) return;
-    await fetch(`${API_BASE}/api/news/${id}`, { method: "DELETE" });
-    setSuccessMsg("Berita dihapus."); fetchData();
+    const res = await fetch(`${API_BASE}/api/news/${id}`, { method: "DELETE" });
+    if(res.ok) {
+        setSuccessMsg("Berita dihapus."); 
+        fetchData();
+    }
   };
 
   const handleLogout = () => {
@@ -207,7 +227,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-pageRadial font-sans text-slate-800">
-      {/* HEADER */}
       <header className="bg-white/90 backdrop-blur border-b border-slate-200 sticky top-0 z-30">
         <div className="w-[min(1120px,92%)] mx-auto h-16 flex items-center justify-between px-4">
           <div>
@@ -221,8 +240,6 @@ export default function AdminDashboard() {
       </header>
 
       <main className="py-8 w-[min(1120px,92%)] mx-auto space-y-8 px-2">
-        
-        {/* STATS */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <InfoCard icon={<MapPin className="w-5 h-5"/>} title={`${places.length}`} text="Total Tempat" />
           <InfoCard icon={<Newspaper className="w-5 h-5"/>} title={`${newsList.length}`} text="Total Berita" />
@@ -230,7 +247,6 @@ export default function AdminDashboard() {
           <InfoCard icon={<Mountain className="w-5 h-5"/>} title={`${places.filter(p=>p.category.includes('Wisata')).length}`} text="Wisata" />
         </section>
 
-        {/* TABS SWITCHER (TOMBOL UNTUK PINDAH KE MENU BERITA) */}
         <div className="flex gap-4 border-b border-slate-200">
           <button 
             onClick={() => setActiveTab("places")}
@@ -246,14 +262,11 @@ export default function AdminDashboard() {
           </button>
         </div>
 
-        {/* NOTIFICATIONS */}
         {error && <div className="p-3 bg-red-50 text-red-600 text-xs rounded-lg border border-red-100">{error}</div>}
         {successMsg && <div className="p-3 bg-green-50 text-green-600 text-xs rounded-lg border border-green-100">{successMsg}</div>}
 
-        {/* === TAB CONTENT: PLACES === */}
         {activeTab === "places" && (
           <div className="grid lg:grid-cols-[1.5fr_1fr] gap-8 items-start">
-            {/* TABLE PLACES */}
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold text-slate-800">Daftar Tempat</h3>
@@ -268,8 +281,8 @@ export default function AdminDashboard() {
                     <tr><th className="p-2">Nama</th><th className="p-2">Kategori</th><th className="p-2 text-right">Aksi</th></tr>
                   </thead>
                   <tbody>
-                    {displayPlaces.map(p => (
-                      <tr key={p.id} className="border-b last:border-0 hover:bg-slate-50">
+                    {displayPlaces.map((p, idx) => (
+                      <tr key={`${p.category}-${p.id}-${idx}`} className="border-b last:border-0 hover:bg-slate-50">
                         <td className="p-2 font-medium">{p.name}<div className="text-[10px] text-slate-400 truncate w-32">{p.address}</div></td>
                         <td className="p-2"><span className="text-[10px] px-2 py-0.5 bg-slate-100 rounded-full">{p.category}</span></td>
                         <td className="p-2 text-right space-x-1">
@@ -283,7 +296,6 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* FORM PLACES */}
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 sticky top-24">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold text-slate-800 flex items-center gap-2">
@@ -293,13 +305,13 @@ export default function AdminDashboard() {
                 {isEditing && <button onClick={()=>{setIsEditing(false);setPlaceForm({name:"",category:"",address:"",imageUrl:"",price:"0"})}} className="text-xs text-red-500">Batal</button>}
               </div>
               <form onSubmit={handlePlaceSubmit} className="space-y-3">
-                <div><label className="text-xs font-semibold">Nama</label><input className="w-full border rounded p-2 text-sm" value={placeForm.name} onChange={e=>handlePlaceChange("name",e.target.value)}/></div>
+                <div><label className="text-xs font-semibold">Nama</label><input className="w-full border rounded p-2 text-sm" value={placeForm.name} onChange={e=>handlePlaceChange("name",e.target.value)} required/></div>
                 <div><label className="text-xs font-semibold">Kategori</label>
-                  <select className="w-full border rounded p-2 text-sm bg-white" value={placeForm.category} onChange={e=>handlePlaceChange("category",e.target.value)} disabled={isEditing}>
+                  <select className="w-full border rounded p-2 text-sm bg-white" value={placeForm.category} onChange={e=>handlePlaceChange("category",e.target.value)} disabled={isEditing} required>
                     <option value="">Pilih...</option><option value="Wisata Alam">Wisata Alam</option><option value="Cafe">Cafe</option><option value="Kuliner">Kuliner</option>
                   </select>
                 </div>
-                <div><label className="text-xs font-semibold">Alamat</label><input className="w-full border rounded p-2 text-sm" value={placeForm.address} onChange={e=>handlePlaceChange("address",e.target.value)}/></div>
+                <div><label className="text-xs font-semibold">Alamat</label><input className="w-full border rounded p-2 text-sm" value={placeForm.address} onChange={e=>handlePlaceChange("address",e.target.value)} required/></div>
                 <div><label className="text-xs font-semibold">Link Foto</label><input className="w-full border rounded p-2 text-sm" placeholder="https://..." value={placeForm.imageUrl} onChange={e=>handlePlaceChange("imageUrl",e.target.value)}/></div>
                 <div><label className="text-xs font-semibold">Harga</label><input type="number" className="w-full border rounded p-2 text-sm" value={placeForm.price} onChange={e=>handlePlaceChange("price",e.target.value)}/></div>
                 <button disabled={isLoading} className="w-full bg-slate-900 text-white py-2 rounded font-semibold text-sm hover:bg-black disabled:bg-slate-400">
@@ -310,10 +322,8 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* === TAB CONTENT: NEWS (BARU) === */}
         {activeTab === "news" && (
           <div className="grid lg:grid-cols-[1.5fr_1fr] gap-8 items-start">
-            {/* TABLE NEWS */}
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
               <h3 className="font-bold text-slate-800 mb-4">Arsip Berita</h3>
               <div className="overflow-auto max-h-[500px]">
@@ -322,8 +332,8 @@ export default function AdminDashboard() {
                     <tr><th className="p-2">Judul</th><th className="p-2">Tanggal</th><th className="p-2 text-right">Aksi</th></tr>
                   </thead>
                   <tbody>
-                    {newsList.map(n => (
-                      <tr key={n.id} className="border-b last:border-0 hover:bg-slate-50">
+                    {newsList.map((n, idx) => (
+                      <tr key={n.id || `news-${idx}`} className="border-b last:border-0 hover:bg-slate-50">
                         <td className="p-2 font-medium">{n.title}<div className="text-[10px] text-slate-400">{n.category}</div></td>
                         <td className="p-2 text-xs text-slate-500">{n.date}</td>
                         <td className="p-2 text-right">
@@ -337,19 +347,18 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* FORM NEWS */}
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 sticky top-24">
               <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <FileText className="w-4 h-4 text-indigo-600"/> Terbitkan Berita
               </h3>
               <form onSubmit={handleNewsSubmit} className="space-y-3">
-                <div><label className="text-xs font-semibold">Judul Berita</label><input className="w-full border rounded p-2 text-sm" value={newsForm.title} onChange={e=>handleNewsChange("title",e.target.value)} placeholder="Contoh: Festival Banyumas 2024"/></div>
+                <div><label className="text-xs font-semibold">Judul Berita</label><input className="w-full border rounded p-2 text-sm" value={newsForm.title} onChange={e=>handleNewsChange("title",e.target.value)} placeholder="Contoh: Festival Banyumas 2024" required/></div>
                 <div className="grid grid-cols-2 gap-2">
                   <div><label className="text-xs font-semibold">Kategori</label><input className="w-full border rounded p-2 text-sm" value={newsForm.category} onChange={e=>handleNewsChange("category",e.target.value)} placeholder="Wisata/Event"/></div>
-                  <div><label className="text-xs font-semibold">Tanggal</label><input type="date" className="w-full border rounded p-2 text-sm" value={newsForm.date} onChange={e=>handleNewsChange("date",e.target.value)}/></div>
+                  <div><label className="text-xs font-semibold">Tanggal</label><input type="date" className="w-full border rounded p-2 text-sm" value={newsForm.date} onChange={e=>handleNewsChange("date",e.target.value)} required/></div>
                 </div>
                 <div><label className="text-xs font-semibold">Link Foto Cover</label><input className="w-full border rounded p-2 text-sm" value={newsForm.image_url} onChange={e=>handleNewsChange("image_url",e.target.value)} placeholder="https://..."/></div>
-                <div><label className="text-xs font-semibold">Isi Singkat / Ringkasan</label><textarea rows={4} className="w-full border rounded p-2 text-sm" value={newsForm.content} onChange={e=>handleNewsChange("content",e.target.value)} placeholder="Tulis deskripsi berita..."/></div>
+                <div><label className="text-xs font-semibold">Isi Singkat / Ringkasan</label><textarea rows={4} className="w-full border rounded p-2 text-sm" value={newsForm.content} onChange={e=>handleNewsChange("content",e.target.value)} placeholder="Tulis deskripsi berita..." required/></div>
                 
                 <button disabled={isLoading} className="w-full bg-slate-900 text-white py-2 rounded font-semibold text-sm hover:bg-black disabled:bg-slate-400">
                   {isLoading ? "Publishing..." : "Terbitkan Berita"}
