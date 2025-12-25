@@ -19,6 +19,7 @@ pub struct TempatNongkrong {
     pub htm: i32,
     pub link_gmaps: String,
     pub link_foto: String,
+    pub deskripsi: String, // Tambahan
 }
 
 #[derive(Debug, Deserialize)]
@@ -31,13 +32,14 @@ pub struct TempatNongkrongPayload {
     pub htm: i32,
     pub link_gmaps: String,
     pub link_foto: String,
+    pub deskripsi: String, // Tambahan
 }
 
 pub async fn get_tempat_nongkrong(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<TempatNongkrong>>, (StatusCode, String)> {
     let rows = sqlx::query_as::<_, TempatNongkrong>(
-        r#"SELECT id, nama_tempat, kategori, alamat, jam_buka, jam_tutup, htm, link_gmaps, link_foto FROM tempat_nongkrong ORDER BY id"#,
+        r#"SELECT id, nama_tempat, kategori, alamat, jam_buka, jam_tutup, htm, link_gmaps, link_foto, deskripsi FROM tempat_nongkrong ORDER BY id"#,
     )
     .fetch_all(&state.pool)
     .await
@@ -51,7 +53,7 @@ pub async fn get_tempat_nongkrong_id(
     Path(id): Path<i32>,
 ) -> Result<Json<TempatNongkrong>, (StatusCode, String)> {
     let row = sqlx::query_as::<_, TempatNongkrong>(
-        r#"SELECT id, nama_tempat, kategori, alamat, jam_buka, jam_tutup, htm, link_gmaps, link_foto FROM tempat_nongkrong WHERE id = $1"#,
+        r#"SELECT id, nama_tempat, kategori, alamat, jam_buka, jam_tutup, htm, link_gmaps, link_foto, deskripsi FROM tempat_nongkrong WHERE id = $1"#,
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -67,9 +69,9 @@ pub async fn create_tempat_nongkrong(
 ) -> Result<(StatusCode, Json<TempatNongkrong>), (StatusCode, String)> {
     let inserted = sqlx::query_as::<_, TempatNongkrong>(
         r#"
-        INSERT INTO tempat_nongkrong (nama_tempat, kategori, alamat, jam_buka, jam_tutup, htm, link_gmaps, link_foto)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-        RETURNING id, nama_tempat, kategori, alamat, jam_buka, jam_tutup, htm, link_gmaps, link_foto
+        INSERT INTO tempat_nongkrong (nama_tempat, kategori, alamat, jam_buka, jam_tutup, htm, link_gmaps, link_foto, deskripsi)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+        RETURNING id, nama_tempat, kategori, alamat, jam_buka, jam_tutup, htm, link_gmaps, link_foto, deskripsi
         "#,
     )
     .bind(payload.nama_tempat)
@@ -80,6 +82,7 @@ pub async fn create_tempat_nongkrong(
     .bind(payload.htm)
     .bind(payload.link_gmaps)
     .bind(payload.link_foto)
+    .bind(payload.deskripsi)
     .fetch_one(&state.pool)
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("DB error: {e:?}")))?;
@@ -87,7 +90,6 @@ pub async fn create_tempat_nongkrong(
     Ok((StatusCode::CREATED, Json(inserted)))
 }
 
-// --- BARU: UPDATE ---
 pub async fn update_tempat_nongkrong(
     State(state): State<AppState>,
     Path(id): Path<i32>,
@@ -96,8 +98,8 @@ pub async fn update_tempat_nongkrong(
     let result = sqlx::query(
         r#"
         UPDATE tempat_nongkrong 
-        SET nama_tempat=$1, kategori=$2, alamat=$3, jam_buka=$4, jam_tutup=$5, htm=$6, link_gmaps=$7, link_foto=$8 
-        WHERE id=$9
+        SET nama_tempat=$1, kategori=$2, alamat=$3, jam_buka=$4, jam_tutup=$5, htm=$6, link_gmaps=$7, link_foto=$8, deskripsi=$9 
+        WHERE id=$10
         "#
     )
     .bind(payload.nama_tempat)
@@ -108,6 +110,7 @@ pub async fn update_tempat_nongkrong(
     .bind(payload.htm)
     .bind(payload.link_gmaps)
     .bind(payload.link_foto)
+    .bind(payload.deskripsi)
     .bind(id)
     .execute(&state.pool)
     .await
@@ -120,7 +123,6 @@ pub async fn update_tempat_nongkrong(
     Ok(Json("Update Berhasil".to_string()))
 }
 
-// --- BARU: DELETE ---
 pub async fn delete_tempat_nongkrong(
     State(state): State<AppState>,
     Path(id): Path<i32>,

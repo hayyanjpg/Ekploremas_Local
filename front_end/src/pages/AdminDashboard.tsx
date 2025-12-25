@@ -1,7 +1,7 @@
 import { useMemo, useState, FormEvent, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; 
 import { 
-  MapPin, Coffee, Mountain, PlusCircle, 
+  MapPin, Coffee, Mountain, PlusCircle, Clock,
   Search, LogOut, Trash2, Pencil, FileText, Newspaper
 } from "lucide-react";
 
@@ -19,6 +19,8 @@ type AdminPlace = {
   address: string;
   imageUrl?: string;
   price?: number;
+  jam_buka?: string;
+  jam_tutup?: string;
 };
 
 type PlaceForm = {
@@ -27,6 +29,8 @@ type PlaceForm = {
   address: string;
   imageUrl: string;
   price: string;
+  jam_buka: string;
+  jam_tutup: string;
 };
 
 type NewsItem = {
@@ -66,7 +70,13 @@ export default function AdminDashboard() {
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [placeForm, setPlaceForm] = useState<PlaceForm>({
-    name: "", category: "", address: "", imageUrl: "", price: "0",
+    name: "", 
+    category: "", 
+    address: "", 
+    imageUrl: "", 
+    price: "0",
+    jam_buka: "08:00",
+    jam_tutup: "21:00"
   });
 
   // NEWS FORM STATE
@@ -77,7 +87,6 @@ export default function AdminDashboard() {
   // --- 1. FETCH ALL DATA ---
   const fetchData = async () => {
     try {
-      // Fetch Places
       const [resWisata, resCafe, resKuliner] = await Promise.all([
         fetch(`${API_BASE}/wisata_alam`),
         fetch(`${API_BASE}/tempat_nongkrong`),
@@ -89,18 +98,16 @@ export default function AdminDashboard() {
       const dataKuliner = await resKuliner.json();
 
       const mergedPlaces = [
-        ...dataWisata.map((i:any) => ({ id: i.id, name: i.nama_tempat, category: "Wisata Alam", address: i.alamat, imageUrl: i.link_foto, price: i.htm })),
-        ...dataCafe.map((i:any) => ({ id: i.id, name: i.nama_tempat, category: "Cafe", address: i.alamat, imageUrl: i.link_foto, price: i.htm })),
-        ...dataKuliner.map((i:any) => ({ id: i.id, name: i.nama_tempat, category: "Kuliner", address: i.alamat, imageUrl: i.link_foto, price: i.htm })),
+        ...dataWisata.map((i:any) => ({ id: i.id, name: i.nama_tempat, category: "Wisata Alam", address: i.alamat, imageUrl: i.link_foto, price: i.htm, jam_buka: i.jam_buka, jam_tutup: i.jam_tutup })),
+        ...dataCafe.map((i:any) => ({ id: i.id, name: i.nama_tempat, category: "Cafe", address: i.alamat, imageUrl: i.link_foto, price: i.htm, jam_buka: i.jam_buka, jam_tutup: i.jam_tutup })),
+        ...dataKuliner.map((i:any) => ({ id: i.id, name: i.nama_tempat, category: "Kuliner", address: i.alamat, imageUrl: i.link_foto, price: i.htm, jam_buka: i.jam_buka, jam_tutup: i.jam_tutup })),
       ];
       setPlaces(mergedPlaces);
 
-      // Fetch News
       const resNews = await fetch(`${API_BASE}/api/news`);
       if (resNews.ok) {
         setNewsList(await resNews.json());
       }
-
     } catch (err) {
       console.error("Gagal ambil data:", err);
     }
@@ -108,14 +115,12 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchData();
-    // Reset success message after 3 seconds to prevent effect loop if dependencies change
     if (successMsg) {
         const timer = setTimeout(() => setSuccessMsg(""), 3000);
         return () => clearTimeout(timer);
     }
   }, [successMsg]); 
 
-  // --- HANDLERS FOR PLACES ---
   const handlePlaceChange = (field: keyof PlaceForm, value: string) => {
     setPlaceForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -131,13 +136,42 @@ export default function AdminDashboard() {
 
       if (placeForm.category === "Wisata Alam") {
         endpoint = isEditing ? `${API_BASE}/api/update_wisata/${editId}` : `${API_BASE}/api/add_wisata`;
-        payload = { name: placeForm.name, category: "wisata alam", address: placeForm.address, open: "08:00", close: "17:00", htm: parseInt(placeForm.price)||0, gmaps: "-", pictures: placeForm.imageUrl };
+        payload = { 
+          name: placeForm.name, 
+          category: "wisata alam", 
+          address: placeForm.address, 
+          open: placeForm.jam_buka, 
+          close: placeForm.jam_tutup, 
+          htm: parseInt(placeForm.price)||0, 
+          gmaps: "-", 
+          pictures: placeForm.imageUrl 
+        };
       } else if (placeForm.category === "Cafe") {
         endpoint = isEditing ? `${API_BASE}/api/update_cafe/${editId}` : `${API_BASE}/api/add_tempat_nongkrong`;
-        payload = { nama_tempat: placeForm.name, kategori: "tempat nongkrong", alamat: placeForm.address, jam_buka: "10:00", jam_tutup: "22:00", htm: parseInt(placeForm.price)||0, link_gmaps: "-", link_foto: placeForm.imageUrl, deskripsi: "-" };
+        payload = { 
+          nama_tempat: placeForm.name, 
+          kategori: "tempat nongkrong", 
+          alamat: placeForm.address, 
+          jam_buka: placeForm.jam_buka, 
+          jam_tutup: placeForm.jam_tutup, 
+          htm: parseInt(placeForm.price)||0, 
+          link_gmaps: "-", 
+          link_foto: placeForm.imageUrl, 
+          deskripsi: "-" 
+        };
       } else if (placeForm.category === "Kuliner") {
         endpoint = isEditing ? `${API_BASE}/api/update_kuliner/${editId}` : `${API_BASE}/api/add_kuliner`;
-        payload = { nama_tempat: placeForm.name, kategori: "kuliner", alamat: placeForm.address, htm: parseInt(placeForm.price)||0, link_gmaps: "-", link_foto: placeForm.imageUrl, deskripsi: "-" };
+        payload = { 
+          nama_tempat: placeForm.name, 
+          kategori: "kuliner", 
+          alamat: placeForm.address, 
+          jam_buka: placeForm.jam_buka, 
+          jam_tutup: placeForm.jam_tutup, 
+          htm: parseInt(placeForm.price)||0, 
+          link_gmaps: "-", 
+          link_foto: placeForm.imageUrl, 
+          deskripsi: "-" 
+        };
       } else { throw new Error("Kategori wajib dipilih"); }
 
       const res = await fetch(endpoint, { 
@@ -150,14 +184,22 @@ export default function AdminDashboard() {
 
       setSuccessMsg(isEditing ? "Tempat berhasil diupdate!" : "Tempat berhasil ditambahkan!");
       setIsEditing(false); setEditId(null);
-      setPlaceForm({ name: "", category: "", address: "", imageUrl: "", price: "0" });
+      setPlaceForm({ name: "", category: "", address: "", imageUrl: "", price: "0", jam_buka: "08:00", jam_tutup: "21:00" });
       fetchData();
     } catch (err: any) { setError(err.message); } finally { setIsLoading(false); }
   };
 
   const handleEditPlace = (p: AdminPlace) => {
     setIsEditing(true); setEditId(p.id); setActiveTab("places");
-    setPlaceForm({ name: p.name, category: p.category, address: p.address, imageUrl: p.imageUrl||"", price: p.price?.toString()||"0" });
+    setPlaceForm({ 
+      name: p.name, 
+      category: p.category, 
+      address: p.address, 
+      imageUrl: p.imageUrl||"", 
+      price: p.price?.toString()||"0",
+      jam_buka: p.jam_buka || "08:00",
+      jam_tutup: p.jam_tutup || "21:00"
+    });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -169,13 +211,9 @@ export default function AdminDashboard() {
     else if(cat==="Kuliner") endpoint=`${API_BASE}/api/delete_kuliner/${id}`;
 
     const res = await fetch(endpoint, { method: "DELETE" });
-    if(res.ok) {
-        setSuccessMsg("Data terhapus."); 
-        fetchData();
-    }
+    if(res.ok) { setSuccessMsg("Data terhapus."); fetchData(); }
   };
 
-  // --- HANDLERS FOR NEWS ---
   const handleNewsChange = (field: keyof NewsForm, value: string) => {
     setNewsForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -183,7 +221,6 @@ export default function AdminDashboard() {
   const handleNewsSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(""); setSuccessMsg(""); setIsLoading(true);
-
     try {
       const payload = {
         title: newsForm.title,
@@ -193,15 +230,12 @@ export default function AdminDashboard() {
         content: newsForm.content,
         read_minutes: 3
       };
-
       const res = await fetch(`${API_BASE}/api/news`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-
       if (!res.ok) throw new Error("Gagal memposting berita");
-
       setSuccessMsg("Berita berhasil diterbitkan!");
       setNewsForm({ title: "", category: "", date: "", image_url: "", content: "" });
       fetchData();
@@ -211,17 +245,13 @@ export default function AdminDashboard() {
   const handleDeleteNews = async (id: number) => {
     if(!confirm("Hapus berita ini?")) return;
     const res = await fetch(`${API_BASE}/api/news/${id}`, { method: "DELETE" });
-    if(res.ok) {
-        setSuccessMsg("Berita dihapus."); 
-        fetchData();
-    }
+    if(res.ok) { setSuccessMsg("Berita dihapus."); fetchData(); }
   };
 
   const handleLogout = () => {
     if(confirm("Keluar admin?")) { localStorage.removeItem("role"); navigate("/"); }
   };
 
-  // Filter Logic
   const filteredPlaces = useMemo(() => places.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())), [places, searchQuery]);
   const displayPlaces = searchQuery ? filteredPlaces : [...places].slice(-5).reverse();
 
@@ -248,18 +278,8 @@ export default function AdminDashboard() {
         </section>
 
         <div className="flex gap-4 border-b border-slate-200">
-          <button 
-            onClick={() => setActiveTab("places")}
-            className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition ${activeTab==="places" ? "border-slate-900 text-slate-900" : "border-transparent text-slate-400 hover:text-slate-600"}`}
-          >
-            <MapPin className="w-4 h-4"/> Kelola Tempat
-          </button>
-          <button 
-            onClick={() => setActiveTab("news")}
-            className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition ${activeTab==="news" ? "border-slate-900 text-slate-900" : "border-transparent text-slate-400 hover:text-slate-600"}`}
-          >
-            <Newspaper className="w-4 h-4"/> Kelola Berita
-          </button>
+          <button onClick={() => setActiveTab("places")} className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition ${activeTab==="places" ? "border-slate-900 text-slate-900" : "border-transparent text-slate-400 hover:text-slate-600"}`}><MapPin className="w-4 h-4"/> Kelola Tempat</button>
+          <button onClick={() => setActiveTab("news")} className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition ${activeTab==="news" ? "border-slate-900 text-slate-900" : "border-transparent text-slate-400 hover:text-slate-600"}`}><Newspaper className="w-4 h-4"/> Kelola Berita</button>
         </div>
 
         {error && <div className="p-3 bg-red-50 text-red-600 text-xs rounded-lg border border-red-100">{error}</div>}
@@ -302,7 +322,7 @@ export default function AdminDashboard() {
                   {isEditing ? <Pencil className="w-4 h-4 text-blue-600"/> : <PlusCircle className="w-4 h-4 text-green-600"/>}
                   {isEditing ? "Edit Tempat" : "Tambah Tempat"}
                 </h3>
-                {isEditing && <button onClick={()=>{setIsEditing(false);setPlaceForm({name:"",category:"",address:"",imageUrl:"",price:"0"})}} className="text-xs text-red-500">Batal</button>}
+                {isEditing && <button onClick={()=>{setIsEditing(false);setPlaceForm({name:"",category:"",address:"",imageUrl:"",price:"0",jam_buka:"08:00",jam_tutup:"21:00"})}} className="text-xs text-red-500">Batal</button>}
               </div>
               <form onSubmit={handlePlaceSubmit} className="space-y-3">
                 <div><label className="text-xs font-semibold">Nama</label><input className="w-full border rounded p-2 text-sm" value={placeForm.name} onChange={e=>handlePlaceChange("name",e.target.value)} required/></div>
@@ -312,6 +332,18 @@ export default function AdminDashboard() {
                   </select>
                 </div>
                 <div><label className="text-xs font-semibold">Alamat</label><input className="w-full border rounded p-2 text-sm" value={placeForm.address} onChange={e=>handlePlaceChange("address",e.target.value)} required/></div>
+                
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs font-semibold flex items-center gap-1"><Clock className="w-3 h-3"/> Buka</label>
+                    <input type="time" className="w-full border rounded p-2 text-sm" value={placeForm.jam_buka} onChange={e=>handlePlaceChange("jam_buka", e.target.value)} required/>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold flex items-center gap-1"><Clock className="w-3 h-3"/> Tutup</label>
+                    <input type="time" className="w-full border rounded p-2 text-sm" value={placeForm.jam_tutup} onChange={e=>handlePlaceChange("jam_tutup", e.target.value)} required/>
+                  </div>
+                </div>
+
                 <div><label className="text-xs font-semibold">Link Foto</label><input className="w-full border rounded p-2 text-sm" placeholder="https://..." value={placeForm.imageUrl} onChange={e=>handlePlaceChange("imageUrl",e.target.value)}/></div>
                 <div><label className="text-xs font-semibold">Harga</label><input type="number" className="w-full border rounded p-2 text-sm" value={placeForm.price} onChange={e=>handlePlaceChange("price",e.target.value)}/></div>
                 <button disabled={isLoading} className="w-full bg-slate-900 text-white py-2 rounded font-semibold text-sm hover:bg-black disabled:bg-slate-400">
