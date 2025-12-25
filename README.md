@@ -1,9 +1,29 @@
 database download aja tuh file nya, tinggal run front end npm build sama npm run dev, backend nanti run aja pakai cargo run, sana dah hosting kalian 
-## 🖼️ Gallery Project
+## Cara Menjalankan (Installation Guide)
+
+Ikuti langkah berikut untuk menjalankan proyek di komputer lokal:
+
+1.  **Database:**
+    * Download file `db.sql`.
+    * Import file tersebut ke dalam PostgreSQL (buat database baru bernama `exploremas_db_cek1`).
+
+2.  **Backend (Rust):**
+    * Buka terminal di folder `back_end`.
+    * Jalankan perintah: `cargo run`
+
+3.  **Frontend (React):**
+    * Buka terminal baru di folder `front_end`.
+    * Install dependency: `npm install`
+    * Jalankan mode development: `npm run dev`
+    * *(Opsional)* Untuk build produksi: `npm run build`
+
+---
+
+##  Gallery Project
 
 Koleksi tangkapan layar antarmuka aplikasi **ExploreMas Purwokerto**.
 
-### 🌐 Tampilan Pengguna (Frontend)
+###  Tampilan Pengguna (Frontend)
 Bagian ini menampilkan fitur eksplorasi wisata, rute transportasi, dan informasi kota untuk wisatawan.
 
 | Landing Page (Hero) | Tentang Purwokerto | Dashboard Berita |
@@ -16,12 +36,10 @@ Bagian ini menampilkan fitur eksplorasi wisata, rute transportasi, dan informasi
 | ![Cafe](Screenshot%202025-12-24%20175223.png) | ![Wisata](Screenshot%202025-12-24%20175250.png) | ![Rute](Screenshot%202025-12-24%20175317.png) |
 | *Fitur filter pencarian tempat nongkrong dan kuliner.* | *Informasi detail lokasi wisata beserta jam buka & harga.* | *Panduan koridor bus untuk memudahkan mobilisasi.* |
 
----
-
-### 🔐 Tampilan Pengelola (Admin Panel)
-Bagian khusus admin untuk CRUD manajemen data destinasi dan data penggunaan chatbot
+###  Tampilan Pengelola (Admin Panel)
+Bagian khusus admin untuk operasi CRUD (Create, Read, Update, Delete) manajemen data destinasi dan pemantauan aktivitas chatbot.
 
 | Dashboard Utama Admin | Manajemen FAQ & MasBot |
 | :---: | :---: |
-| ![Admin Dashboard](Screenshot%2025-12-25%160230.png) | ![Chatbot Admin](Screenshot%202025-12-24%20174902.png) |
-| *Panel kendali data wisata.* | *Konfigurasi jawaban otomatis.* |
+| ![Admin Dashboard](Screenshot%202025-12-25%20160230.png) | ![Chatbot Admin](Screenshot%202025-12-24%20174902.png) |
+| *Panel kendali data wisata dan berita.* | *Konfigurasi jawaban otomatis.* |
