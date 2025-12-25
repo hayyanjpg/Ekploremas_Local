@@ -23,5 +23,5 @@ Bagian khusus admin untuk CRUD manajemen data destinasi dan data penggunaan chat
 
 | Dashboard Utama Admin | Manajemen FAQ & MasBot |
 | :---: | :---: |
-| ![Admin Dashboard](Screenshot%202025-12-24%20174852.png) | ![Chatbot Admin](Screenshot%202025-12-24%20174902.png) |
+| ![Admin Dashboard](Screenshot%2025-12-25%160230.png) | ![Chatbot Admin](Screenshot%202025-12-24%20174902.png) |
 | *Panel kendali data wisata.* | *Konfigurasi jawaban otomatis.* |
